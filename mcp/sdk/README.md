@@ -40,6 +40,69 @@ Google Colab上でMCP (Model Context Protocol) サーバーを構築・テスト
 
 ---
 
+## 低レベルMCP SDK とは
+
+**低レベルMCP SDK**とは、MCPプロトコルの生のJSON-RPCメッセージを直接扱うAPI層のことです。`mcp.server.Server` クラスを使い、ツールの登録・実行・スキーマ定義をすべて手動で記述します。
+
+### 低レベルSDKで書いた場合
+
+ツール1つを登録するだけで、以下のすべてを自分で書く必要があります。
+
+```python
+from mcp.server import Server
+from mcp.server.models import InitializationOptions
+from mcp import types
+
+app = Server("my-server")
+
+# ① ツール一覧を返すハンドラを別途定義
+@app.list_tools()
+async def list_tools() -> list[types.Tool]:
+    return [
+        types.Tool(
+            name="add",
+            description="足し算",
+            inputSchema={           # JSONスキーマを手書き
+                "type": "object",
+                "properties": {
+                    "a": {"type": "number"},
+                    "b": {"type": "number"},
+                },
+                "required": ["a", "b"],
+            },
+        )
+    ]
+
+# ② ツール実行ハンドラを別途定義
+@app.call_tool()
+async def call_tool(name: str, arguments: dict):
+    if name == "add":               # 名前で分岐を自分で書く
+        result = arguments["a"] + arguments["b"]
+        return [types.TextContent(type="text", text=str(result))]
+    # ツールが増えるたびにelifが増える
+```
+
+### FastMCPとの対応関係
+
+| 低レベルSDK | FastMCP |
+|---|---|
+| `list_tools()` に Tool を手書き | 型ヒントから自動生成 |
+| `call_tool()` で名前分岐 | デコレータが自動ルーティング |
+| JSONスキーマを手書き | Pythonの型から自動変換 |
+| `TextContent` を自分で包む | 戻り値をそのまま返せる |
+
+### 低レベルSDKが必要になる場面
+
+FastMCPでは表現できない**プロトコルレベルの細かい制御**が必要なときに使います。
+
+- カスタムトランスポートの実装（gRPCへの差し替えなど）
+- 通知メッセージ (`notifications/`) の精密な制御
+- MCPプロトコル自体の拡張・実験
+
+通常のMCPサーバー開発ではFastMCPで十分です。
+
+---
+
 ## FastMCP とは
 
 ### 誕生の背景
