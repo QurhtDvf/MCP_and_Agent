@@ -1,4 +1,4 @@
-# 🤖 A2A Demo — Google Colab + HuggingFace Transformers
+# 🤖 A2A Demo — with HuggingFace Transformers
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![HuggingFace](https://img.shields.io/badge/🤗%20Transformers-4.x-FFD21E?style=flat-square)](https://huggingface.co/docs/transformers)
